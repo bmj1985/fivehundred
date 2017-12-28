@@ -1,0 +1,22 @@
+{
+  "name": "fivehundred",
+  "version": "1.0.0",
+  "description": "card game 500 hundred",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linusyoung/fivehundred.git"
+  },
+  "author": "Linus Yang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/linusyoung/fivehundred/issues"
+  },
+  "homepage": "https://github.com/linusyoung/fivehundred#readme",
+  "dependencies": {
+    "electron": "^1.7.10"
+  }
+}
