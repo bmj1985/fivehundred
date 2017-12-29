@@ -4,7 +4,10 @@
   "description": "card game 500 hundred",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "package-mac": "electron-packager . --overwrite --plateform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
+    "package-win": "electron-packager . --overwrite --asar=true --plateform=win32 --arch=ia32,x64 --icon=assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=ce --version-string.FileDescription=CE --version-string.ProductName=\"Five Hundred\"",
+    "package-linux": "electron-packager . --overwrite --asar=true --plateform=linux --arch=x64 --icon=assets/icons/png/icon.png --prune=true --out=release-builds"
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,10 @@
   },
   "homepage": "https://github.com/linusyoung/fivehundred#readme",
   "dependencies": {
-    "electron": "^1.7.10"
+    "jquery": "^3.2.1"
+  },
+  "devDependencies": {
+    "electron": "^1.7.10",
+    "electron-package": "^0.1.0"
   }
 }
