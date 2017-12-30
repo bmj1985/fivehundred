@@ -1,9 +1,12 @@
 window.$ = window.jQuery = require('jquery');
 
+let score_variant
+let round_to_win
+let team
 $('#new_game').click(function(){
-    let score_variant = $('#score_variant').find(":selected").text();
-    let round_to_win = $('#round_to_win').find(":selected").text();
-    let team = [];
+    score_variant = $('#score_variant').find(":selected").text();
+    round_to_win = $('#round_to_win').find(":selected").text();
+    team = []
     for (i = 1; i <=2; i++){
         team_name = $('#team_name_'+i).val();
         // console.log(team_name);
@@ -13,11 +16,13 @@ $('#new_game').click(function(){
             team.push("Team " + i);
         }
     }
-    create_new_game(score_variant, round_to_win, team)
+
+    create_new_round(score_variant, round_to_win, team)
 });
 
-function create_new_game(score, round, team){
+function create_new_round(score, round, team){
     const hands = $('#hands');
+    hands.html("")
     hands.append(`
         <p>Bid Team</p>`);
     add_team_score(team)
@@ -27,7 +32,7 @@ function create_new_game(score, round, team){
         <div class="row">
         <div class="col s8">
             <select id="tricks_won_select" class = "browser-default">
-                <option value = "" disabled selected>
+                <option value = "default" disabled selected>
                     Select bidders won tricks
                 </option>
                 <option value = "10">10</option>
@@ -47,23 +52,50 @@ function create_new_game(score, round, team){
             <button class="btn waves-effect waves-light disabled" type="submit" name="action" id='new_hand'>New Hand
               <i class="material-icons right">autorenew</i>
             </button>
+            <button class="btn waves-effect waves-light" type="submit" name="action" id='new_round'>New Round
+              <i class="material-icons right">autorenew</i>
+            </button>
         </div>
         </div>
         `);
-    $('#new_hand').bind("click",()=>{
-        calculate_result()
-    })
 
-    $('#tricks_won_select').bind("change", ()=>{
+    $('#new_round').hide()
+
+    $('#tricks_won_select').on("change", ()=>{
         $('#new_hand').removeClass("disabled")
     });
 }
 
+$(document).on("click", '#new_hand',()=>{
+    var current_scores = calculate_result()
+    reset_hand(current_scores)
+})
+
+$(document).on("click", '#new_round',()=>{
+    create_new_round(score_variant, round_to_win, team)
+})
+
+function reset_hand(scores) {
+    $("#team1").prop("checked", true);
+    $("#bid_6_2").prop("checked", true);
+    $("#tricks_won_select > [value=default]").prop("disabled", false)
+    $("#tricks_won_select > [value=default]").prop("selected", true)
+    $("#tricks_won_select > [value=default]").prop("disabled", true)
+    $('#new_hand').addClass("disabled")
+    scores.forEach((element)=>{
+        if (element >=500 || element <= -500){
+            $('#new_hand').hide()
+            $('#new_round').show()
+        }
+    })
+}
+
 function calculate_result() {
+    var scores = []
     var team_selected = $("input[name='bid_team']:checked").attr("id")
     var team1_score = parseInt($('#team_1_score').text())
     var team2_score = parseInt($('#team_2_score').text())
-    var won_tricks = $('#tricks_won_select option:selected').text()
+    var won_tricks = parseInt($('#tricks_won_select option:selected').text())
     var bid = $("input[name='bid']:checked").attr("id")
     var bid_score = parseInt($('[for='+bid+']').text())
     var tricks_to_win
@@ -72,7 +104,7 @@ function calculate_result() {
     } else if (bid.includes("Misere") || bid.includes("Patatrope")) {
         tricks_to_win = 0
     } else {
-        tricks_to_win = bid.charAt(4)
+        tricks_to_win = parseInt(bid.match(/_\d{1,2}_/g).toString().replace(/_/g,""))
     }
     var result
     if (won_tricks >= tricks_to_win || (tricks_to_win == 5 && won_tricks == 5)){
@@ -103,8 +135,25 @@ function calculate_result() {
                 team2_score -= bid_score
             break
     }
+    if (team1_score < 0){
+        $('#team_1_board').toggleClass("red", true)
+        $('#team_1_board').removeClass("teal")
+    } else {
+        $('#team_1_board').toggleClass("teal", true)
+        $('#team_1_board').removeClass("red")
+    }
+    if (team2_score < 0){
+        $('#team_2_board').toggleClass("red", true)
+        $('#team_2_board').removeClass("teal")
+    } else {
+        $('#team_2_board').toggleClass("teal", true)
+        $('#team_2_board').removeClass("red")
+    }
     $('#team_1_score').html(`<font size="20">`+team1_score+`</font>`)
     $('#team_2_score').html(`<font size="20">`+team2_score+`</font>`)
+    scores.push(team1_score)
+    scores.push(team2_score)
+    return scores
 }
 
 function add_team_score(team) {
@@ -118,7 +167,7 @@ function add_team_score(team) {
         var team_label =$("<label/>").attr({for: "team" +(i+1)}).html(team[i])
         $(team_select).appendTo($('#team_sec_' +(i+1)))
         $(team_label).appendTo($('#team_sec_'+(i+1)))
-        var team_score = $("<div/>").addClass("card blue-grey darken-1")
+        var team_score = $("<div/>").attr({id:"team_" +(i+1) +"_board"}).addClass("card teal darken-1")
         team_score.append(`
                     <div class="card-content white-text">
                         <p id="team_`+(i+1)+`_score" class="center"><font size="20">0</font></p>
@@ -154,8 +203,8 @@ function add_bid_table(score){
                         cell_col.innerHTML = i;
                     } else{
                         var bid = 20+(i-6)*100 + (j-2)*20
-                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
-                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+"_"+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+"_"+j}).html(bid)
                         $(bid_select).appendTo(cell_col)
                         $(bid_label).appendTo(cell_col)
                     }
@@ -192,8 +241,8 @@ function add_bid_table(score){
                         cell_col.innerHTML = i;
                     } else{
                         var bid = 40+(i-6)*100 + (j-2)*20
-                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
-                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+"_"+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+"_"+j}).html(bid)
                         $(bid_select).appendTo(cell_col)
                         $(bid_label).appendTo(cell_col)
                     }
@@ -228,8 +277,8 @@ function add_bid_table(score){
                         cell_col.innerHTML = i;
                     } else{
                         var bid = (20*(i-6)+40)*(j-1)
-                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
-                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+"_"+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+"_"+j}).html(bid)
                         $(bid_select).appendTo(cell_col)
                         $(bid_label).appendTo(cell_col)
                     }
@@ -256,5 +305,5 @@ function add_bid_table(score){
             break;
         default:
     }
-    $("#bid_62").prop("checked", true);
+    $("#bid_6_2").prop("checked", true);
 }
