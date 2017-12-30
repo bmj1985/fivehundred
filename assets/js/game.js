@@ -51,7 +51,7 @@ function create_new_game(score, round, team){
         </div>
         `);
     $('#new_hand').bind("click",()=>{
-        console.log(selected_team())
+        calculate_result()
     })
 
     $('#tricks_won_select').bind("change", ()=>{
@@ -59,9 +59,52 @@ function create_new_game(score, round, team){
     });
 }
 
-function selected_team(){
-    var selected_id = $("input[name='bid_team']:checked").attr("id")
-    return $('[for='+selected_id+']').text()
+function calculate_result() {
+    var team_selected = $("input[name='bid_team']:checked").attr("id")
+    var team1_score = parseInt($('#team_1_score').text())
+    var team2_score = parseInt($('#team_2_score').text())
+    var won_tricks = $('#tricks_won_select option:selected').text()
+    var bid = $("input[name='bid']:checked").attr("id")
+    var bid_score = parseInt($('[for='+bid+']').text())
+    var tricks_to_win
+    if (bid.includes("Hi")) {
+        tricks_to_win = 5
+    } else if (bid.includes("Misere") || bid.includes("Patatrope")) {
+        tricks_to_win = 0
+    } else {
+        tricks_to_win = bid.charAt(4)
+    }
+    var result
+    if (won_tricks >= tricks_to_win || (tricks_to_win == 5 && won_tricks == 5)){
+        result = "won"
+    } else {
+        result = "lose"
+    }
+    switch (result) {
+        case "won":
+            switch (team_selected){
+                case "team1":
+                    team1_score += bid_score
+                    team2_score += (10-won_tricks)*10
+                    break;
+                case "team2":
+                    team1_score += (10-won_tricks)*10
+                    team2_score += bid_score
+                    break;
+            }
+            break
+        case "lose":
+            case "team1":
+                team1_score -= bid_score
+                team2_score += (10-won_tricks)*10
+                break;
+            case "team2":
+                team1_score += (10-won_tricks)*10
+                team2_score -= bid_score
+            break
+    }
+    $('#team_1_score').html(`<font size="20">`+team1_score+`</font>`)
+    $('#team_2_score').html(`<font size="20">`+team2_score+`</font>`)
 }
 
 function add_team_score(team) {
@@ -78,7 +121,7 @@ function add_team_score(team) {
         var team_score = $("<div/>").addClass("card blue-grey darken-1")
         team_score.append(`
                     <div class="card-content white-text">
-                        <h3 class="center">0</h3>
+                        <p id="team_`+(i+1)+`_score" class="center"><font size="20">0</font></p>
                     </div>`)
         $(team_score).appendTo($('#team_sec_'+(i+1)))
     }
@@ -120,7 +163,7 @@ function add_bid_table(score){
                 }
                 $(row_value).appendTo($('#bid_score'));
             }
-            var row_array = [["Misere","150","Open Misere","250","Hi/Lo","150"],
+            var row_array = [["Misere","150","Open Misere","250","Hi/Lo","350"],
                              ["Doulbe Misere","450","Patatrope","750","Blind Misere","1000"]];
             for (i=0; i<row_array.length; i++){
                 var row_value = document.createElement("tr");
@@ -130,8 +173,8 @@ function add_bid_table(score){
                         cell.innerHTML = row_array[i][j]
                     } else{
                         var bid = row_array[i][j]
-                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+row_array[i][j-1].replace(" ", ""), type:"radio"})
-                        var bid_label =$("<label/>").attr({for: "bid_"+row_array[i][j-1].replace(" ", "")}).html(bid)
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+row_array[i][j-1].replace(/\s{1}|\//i, ""), type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+row_array[i][j-1].replace(/\s{1}|\//i, "")}).html(bid)
                         $(bid_select).appendTo(cell)
                         $(bid_label).appendTo(cell)
                     }
