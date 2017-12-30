@@ -20,40 +20,7 @@ function create_new_game(score, round, team){
     const hands = $('#hands');
     hands.append(`
         <p>Bid Team</p>`);
-    for (i=0; i < team.length; i++) {
-        hands.append(`
-            <input name="bid_team" id="team`+ (i+1) +`" type="radio" />` +
-            `<label for="team`+ (i+1) +`">` + team[i]+ `</label>`);
-    }
-    hands.append(`
-        <div class="card blue-grey darken-1">
-            <div class="card-content white-text">
-                <p>0</p>
-            </div>
-        </div>`);
-    hands.append(`
-        <div class="card blue-grey darken-1">
-            <div class="card-content white-text">
-                <p>0</p>
-            </div>
-        </div>`);
-    hands.append(`
-        <table class="striped centered" id="bid">
-            <thead>
-                <tr>
-                  <th>Tricks</th>
-                  <th>Spades</th>
-                  <th>Clubs</th>
-                  <th>Diamonds</th>
-                  <th>Hearts</th>
-                  <th>NT</th>
-                </tr>
-            </thead>
-            <tbody id="bid_score">
-            <tbody>
-        </table>
-        `);
-
+    add_team_score(team)
     add_bid_table(score);
     $('<div class="divider"></div><div class="section" id="tricks_won"></div>').appendTo($('#hands'));
     $('#tricks_won').append(`
@@ -77,19 +44,63 @@ function create_new_game(score, round, team){
             </select>
         </div>
         <div class="col s4">
-            <button class="btn waves-effect waves-light" type="submit" name="action" id='new_hand'>New Hand
+            <button class="btn waves-effect waves-light disabled" type="submit" name="action" id='new_hand'>New Hand
               <i class="material-icons right">autorenew</i>
             </button>
         </div>
         </div>
         `);
+    $('#new_hand').bind("click",()=>{
+        console.log(selected_team())
+    })
+
+    $('#tricks_won_select').bind("change", ()=>{
+        $('#new_hand').removeClass("disabled")
+    });
 }
 
 function selected_team(){
-    var selected_team = $("input[name='bid_team']:checked").val();
+    var selected_id = $("input[name='bid_team']:checked").attr("id")
+    return $('[for='+selected_id+']').text()
 }
 
+function add_team_score(team) {
+    var score_board = $("<div/>").attr({id: "score_board"}).addClass("row")
+    $(score_board).appendTo($('#hands'))
+    for (i=0; i<=1; i++){
+        var team_sec = $("<div/>").attr({id: "team_sec_"+(i+1)}).addClass("col s6")
+        $(team_sec).appendTo($('#score_board'))
+
+        var team_select = $("<input/>").attr({name: "bid_team", id:"team" +(i+1), type:"radio"})
+        var team_label =$("<label/>").attr({for: "team" +(i+1)}).html(team[i])
+        $(team_select).appendTo($('#team_sec_' +(i+1)))
+        $(team_label).appendTo($('#team_sec_'+(i+1)))
+        var team_score = $("<div/>").addClass("card blue-grey darken-1")
+        team_score.append(`
+                    <div class="card-content white-text">
+                        <h3 class="center">0</h3>
+                    </div>`)
+        $(team_score).appendTo($('#team_sec_'+(i+1)))
+    }
+    $("#team1").prop("checked", true);
+}
 function add_bid_table(score){
+    $('#hands').append(`
+        <table class="striped centered" id="bid">
+            <thead>
+                <tr>
+                  <th>Tricks</th>
+                  <th>Spades</th>
+                  <th>Clubs</th>
+                  <th>Diamonds</th>
+                  <th>Hearts</th>
+                  <th>NT</th>
+                </tr>
+            </thead>
+            <tbody id="bid_score">
+            <tbody>
+        </table>
+        `);
     switch (score) {
         case "Perfect":
             for (i=6; i<=10; i++){
@@ -99,7 +110,11 @@ function add_bid_table(score){
                     if (j == 1){
                         cell_col.innerHTML = i;
                     } else{
-                        cell_col.innerHTML = 20+(i-6)*100 + (j-2)*20;
+                        var bid = 20+(i-6)*100 + (j-2)*20
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        $(bid_select).appendTo(cell_col)
+                        $(bid_label).appendTo(cell_col)
                     }
                     row_value.appendChild(cell_col);
                 }
@@ -111,7 +126,15 @@ function add_bid_table(score){
                 var row_value = document.createElement("tr");
                 for (j=0; j<row_array[i].length; j++){
                     var cell = document.createElement("td");
-                    cell.innerHTML = row_array[i][j];
+                    if (j%2 == 0){
+                        cell.innerHTML = row_array[i][j]
+                    } else{
+                        var bid = row_array[i][j]
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+row_array[i][j-1].replace(" ", ""), type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+row_array[i][j-1].replace(" ", "")}).html(bid)
+                        $(bid_select).appendTo(cell)
+                        $(bid_label).appendTo(cell)
+                    }
                     row_value.appendChild(cell);
                 }
                 $(row_value).appendTo($('#bid_score'));
@@ -125,7 +148,11 @@ function add_bid_table(score){
                     if (j == 1){
                         cell_col.innerHTML = i;
                     } else{
-                        cell_col.innerHTML = 40+(i-6)*100 + (j-2)*20;
+                        var bid = 40+(i-6)*100 + (j-2)*20
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        $(bid_select).appendTo(cell_col)
+                        $(bid_label).appendTo(cell_col)
                     }
                     row_value.appendChild(cell_col);
                 }
@@ -135,7 +162,16 @@ function add_bid_table(score){
             var row_value = document.createElement("tr");
             for (i=0; i<row_array.length; i++){
                 var cell = document.createElement("td");
-                cell.innerHTML = row_array[i];
+                if (i%2 == 0){
+                    cell.innerHTML = row_array[i]
+                } else{
+                    var bid = row_array[i]
+                    var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+row_array[i-1].replace(" ", ""), type:"radio"})
+                    var bid_label =$("<label/>").attr({for: "bid_"+row_array[i-1].replace(" ", "")}).html(bid)
+                    $(bid_select).appendTo(cell)
+                    $(bid_label).appendTo(cell)
+                }
+                // cell.innerHTML = row_array[i];
                 row_value.appendChild(cell);
             }
             $(row_value).appendTo($('#bid_score'));
@@ -148,7 +184,11 @@ function add_bid_table(score){
                     if (j == 1){
                         cell_col.innerHTML = i;
                     } else{
-                        cell_col.innerHTML = (20*(i-6)+40)*(j-1);
+                        var bid = (20*(i-6)+40)*(j-1)
+                        var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+i+j, type:"radio"})
+                        var bid_label =$("<label/>").attr({for: "bid_"+i+j}).html(bid)
+                        $(bid_select).appendTo(cell_col)
+                        $(bid_label).appendTo(cell_col)
                     }
                     row_value.appendChild(cell_col);
                 }
@@ -158,12 +198,20 @@ function add_bid_table(score){
             var row_value = document.createElement("tr");
             for (i=0; i<row_array.length; i++){
                 var cell = document.createElement("td");
-                cell.innerHTML = row_array[i];
+                if (i%2 == 0){
+                    cell.innerHTML = row_array[i]
+                } else{
+                    var bid = row_array[i]
+                    var bid_select = $("<input/>").attr({name: "bid", id: "bid_"+row_array[i-1].replace(" ", ""), type:"radio"})
+                    var bid_label =$("<label/>").attr({for: "bid_"+row_array[i-1].replace(" ", "")}).html(bid)
+                    $(bid_select).appendTo(cell)
+                    $(bid_label).appendTo(cell)
+                }
                 row_value.appendChild(cell);
             }
             $(row_value).appendTo($('#bid_score'));
             break;
         default:
-
     }
+    $("#bid_62").prop("checked", true);
 }
