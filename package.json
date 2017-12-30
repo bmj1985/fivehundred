@@ -1,7 +1,7 @@
 {
   "name": "fivehundred",
   "version": "1.0.0",
-  "description": "card game 500 hundred",
+  "description": "Card game 500 score keeping app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
