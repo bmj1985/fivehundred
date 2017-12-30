@@ -3,6 +3,21 @@ window.$ = window.jQuery = require('jquery');
 let score_variant
 let round_to_win
 let team
+
+// initial check
+$('#score_variant').on("change",()=>{
+    if ($('#round_to_win option:selected').val() != ""){
+        $('#new_game').prop("disabled", false)
+    }
+})
+
+$('#round_to_win').on("change",()=>{
+    if ($('#score_variant option:selected').val() != ""){
+        $('#new_game').prop("disabled", false)
+    }
+})
+
+// setup new game
 $('#new_game').click(function(){
     $("#game_result").show()
     $("#new_game_setup").hide()
@@ -22,6 +37,11 @@ $('#new_game').click(function(){
     create_new_round(score_variant, team)
 });
 
+// reset game
+$('#reset').on("click",()=>{
+    location.reload()
+})
+
 function setup_result_board(team, round_to_win) {
     $('#team1_name').html(team[0] +
         `<a id="team1_round_score" class="secondary-content">0
@@ -33,51 +53,7 @@ function setup_result_board(team, round_to_win) {
     $('#reset').hide()
 }
 
-function create_new_round(score, team){
-    var hands = $('#hands')
-    hands.html("")
-    hands.append(`
-        <p>Bid Team</p>`);
-    add_team_score(team)
-    add_bid_table(score);
-    $('<div class="divider"></div><div class="section" id="tricks_won"></div>').appendTo($('#hands'));
-    $('#tricks_won').append(`
-        <div class="row">
-        <div class="col s8">
-            <select id="tricks_won_select" class = "browser-default">
-                <option value = "default" disabled selected>
-                    Select bidders won tricks
-                </option>
-                <option value = "10">10</option>
-                <option value = "9">9</option>
-                <option value = "8">8</option>
-                <option value = "7">7</option>
-                <option value = "6">6</option>
-                <option value = "5">5</option>
-                <option value = "4">4</option>
-                <option value = "3">3</option>
-                <option value = "2">2</option>
-                <option value = "1">1</option>
-                <option value = "0">0</option>
-            </select>
-        </div>
-        <div class="col s4">
-            <button class="btn waves-effect waves-light disabled" type="submit" name="action" id='new_hand'>New Hand
-              <i class="material-icons right">autorenew</i>
-            </button>
-            <button class="btn waves-effect waves-light" type="submit" name="action" id='new_round'>New Round
-              <i class="material-icons right">autorenew</i>
-            </button>
-        </div>
-        </div>
-        `);
 
-    $('#new_round').hide()
-
-    $('#tricks_won_select').on("change", ()=>{
-        $('#new_hand').removeClass("disabled")
-    });
-}
 
 $(document).on("click", '#new_hand',()=>{
     var current_scores = calculate_result()
@@ -120,27 +96,43 @@ $(document).on("click", '#new_round',()=>{
     }
 })
 
-$('#reset').on("click",()=>{
-    location.reload()
-    // $("#game_result").hide()
-    // $("#new_game_setup").show()
-    // $("#hands").html("")
-})
+function create_new_round(score, team){
+    $('#hands').html("")
+    $(`<p>Bid Team</p>`).appendTo($('#hands'))
+    // add score board and bid score
+    add_team_score(team)
+    add_bid_table(score)
 
-$('#score_variant').on("change",()=>{
-    if ($('#round_to_win option:selected').val() != ""){
-        $('#new_game').prop("disabled", false)
-        console.log($('#round_to_win option:selected').val())
+    $('<div class="divider"></div><div class="section" id="tricks_won"></div>').appendTo($('#hands'));
+    $('#tricks_won').append(`
+        <div class="row">
+            <div class="col s8">
+                <select id="tricks_won_select" class = "browser-default">
+                    <option value = "default" disabled selected>
+                        Select bidders won tricks
+                    </option>
+                </select>
+            </div>
+            <div class="col s4">
+                <button class="btn waves-effect waves-light disabled" type="submit" name="action" id='new_hand'>New Hand
+                  <i class="material-icons right">autorenew</i>
+                </button>
+                <button class="btn waves-effect waves-light" type="submit" name="action" id='new_round'>New Round
+                  <i class="material-icons right">autorenew</i>
+                </button>
+            </div>
+        </div>`);
+    for (i=10; i>=0; i--){
+        var trick_option = $('<option/>').attr({value: i}).html(i)
+        $(trick_option).appendTo($('#tricks_won_select'))
     }
-})
 
-$('#round_to_win').on("change",()=>{
-    if ($('#score_variant option:selected').val() != ""){
-        $('#new_game').prop("disabled", false)
-        console.log($('#score_variant option:selected').val())
-    }
+    $('#new_round').hide()
 
-})
+    $('#tricks_won_select').on("change", ()=>{
+        $('#new_hand').removeClass("disabled")
+    });
+}
 
 function reset_hand(scores) {
     $("#team1").prop("checked", true);
@@ -258,6 +250,7 @@ function add_team_score(team) {
     }
     $("#team1").prop("checked", true);
 }
+
 function add_bid_table(score){
     $('#hands').append(`
         <table class="striped centered" id="bid">
