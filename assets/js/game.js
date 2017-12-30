@@ -4,6 +4,8 @@ let score_variant
 let round_to_win
 let team
 $('#new_game').click(function(){
+    $("#game_result").show()
+    $("#new_game_setup").hide()
     score_variant = $('#score_variant').find(":selected").text();
     round_to_win = $('#round_to_win').find(":selected").text();
     team = []
@@ -16,12 +18,23 @@ $('#new_game').click(function(){
             team.push("Team " + i);
         }
     }
-
-    create_new_round(score_variant, round_to_win, team)
+    setup_result_board(team, round_to_win)
+    create_new_round(score_variant, team)
 });
 
-function create_new_round(score, round, team){
-    const hands = $('#hands');
+function setup_result_board(team, round_to_win) {
+    $('#team1_name').html(team[0] +
+        `<a id="team1_round_score" class="secondary-content">0
+            </a>`)
+    $('#team2_name').html(team[1] +
+        `<a id="team2_round_score" class="secondary-content">
+            0
+            </a>`)
+    $('#reset').hide()
+}
+
+function create_new_round(score, team){
+    var hands = $('#hands')
     hands.html("")
     hands.append(`
         <p>Bid Team</p>`);
@@ -72,7 +85,61 @@ $(document).on("click", '#new_hand',()=>{
 })
 
 $(document).on("click", '#new_round',()=>{
-    create_new_round(score_variant, round_to_win, team)
+    var team1_score = parseInt($('#team_1_score').text())
+    var team2_score = parseInt($('#team_2_score').text())
+    var team1_win, team2_win
+    var team_round = 0
+    if (team1_score >=500 || team2_score <= -500){
+        team_round = parseInt($("#team1_round_score").text())
+        team_round += 1
+        $("#team1_round_score").html(team_round)
+        if (team_round == round_to_win){
+            team1_win = true
+        }
+    }
+    if (team2_score >=500 || team1_score <= -500){
+        team_round = parseInt($("#team2_round_score").text())
+        team_round += 1
+        $("#team1_round_score").html(team_round)
+        if (team_round == round_to_win){
+            team2_win = true
+        }
+    }
+    if (team_round < parseInt(round_to_win)){
+        create_new_round(score_variant, team)
+    } else{
+        $("#new_round").hide()
+        if (team1_win) {
+            $("#team1_round_score").html(`<a class="secondary-content"><i class="material-icons">sentiment_very_satisfied</i></a>`)
+            $("#team2_round_score").html(`<a class="secondary-content"><i class="material-icons">sentiment_very_dissatisfied</i></a>`)
+        } else {
+            $("#team2_round_score").html(`<a class="secondary-content"><i class="material-icons">sentiment_very_satisfied</i></a>`)
+            $("#team1_round_score").html(`<a class="secondary-content"><i class="material-icons">sentiment_very_dissatisfied</i></a>`)
+        }
+        $('#reset').show()
+    }
+})
+
+$('#reset').on("click",()=>{
+    location.reload()
+    // $("#game_result").hide()
+    // $("#new_game_setup").show()
+    // $("#hands").html("")
+})
+
+$('#score_variant').on("change",()=>{
+    if ($('#round_to_win option:selected').val() != ""){
+        $('#new_game').prop("disabled", false)
+        console.log($('#round_to_win option:selected').val())
+    }
+})
+
+$('#round_to_win').on("change",()=>{
+    if ($('#score_variant option:selected').val() != ""){
+        $('#new_game').prop("disabled", false)
+        console.log($('#score_variant option:selected').val())
+    }
+
 })
 
 function reset_hand(scores) {
@@ -99,6 +166,7 @@ function calculate_result() {
     var bid = $("input[name='bid']:checked").attr("id")
     var bid_score = parseInt($('[for='+bid+']').text())
     var tricks_to_win
+
     if (bid.includes("Hi")) {
         tricks_to_win = 5
     } else if (bid.includes("Misere") || bid.includes("Patatrope")) {
@@ -107,8 +175,10 @@ function calculate_result() {
         tricks_to_win = parseInt(bid.match(/_\d{1,2}_/g).toString().replace(/_/g,""))
     }
     var result
-    if (won_tricks >= tricks_to_win || (tricks_to_win == 5 && won_tricks == 5)){
+    if ((won_tricks >= tricks_to_win && tricks_to_win !=0)){
         result = "won"
+    } else if ((tricks_to_win == 5 && won_tricks == 5) || (won_tricks == 0 && tricks_to_win ==0)){
+        result = "won_special"
     } else {
         result = "lose"
     }
@@ -121,6 +191,18 @@ function calculate_result() {
                     break;
                 case "team2":
                     team1_score += (10-won_tricks)*10
+                    team2_score += bid_score
+                    break;
+            }
+            break
+        case "won_special":
+            switch (team_selected){
+                case "team1":
+                    team1_score += bid_score
+                    team2_score += 0
+                    break;
+                case "team2":
+                    team1_score += 0
                     team2_score += bid_score
                     break;
             }
